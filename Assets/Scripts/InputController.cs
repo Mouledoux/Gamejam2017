@@ -23,19 +23,16 @@ public class InputController : MonoBehaviour
         }
     }
 
-    private Vector2 GetLeftJoystickInput()
+    private void Update()
     {
-        Vector2 stickPos = Vector2.zero;
-        stickPos.x = Input.GetAxis("Horizontal");
-        stickPos.y = Input.GetAxis("Vertical");
-        return stickPos;
+        transform.position = GetJoystickInput("Left");
     }
 
-    private Vector2 GetRightJoystickInput()
+    private Vector2 GetJoystickInput(string joystick)
     {
         Vector2 stickPos = Vector2.zero;
-        stickPos.x = Input.GetAxis("Horizontal");
-        stickPos.y = Input.GetAxis("Vertical");
+        stickPos.x = Input.GetAxis("Horizontal" + joystick);
+        stickPos.y = Input.GetAxis("Vertical" + joystick);
         return stickPos;
     }
 }
