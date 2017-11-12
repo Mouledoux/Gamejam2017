@@ -22,11 +22,12 @@ public static class Utilities
     {
         get
         {
-            return m_globalGravity * timeScale;
+            return m_globalGravity;
         }
         set
         {
             m_globalGravity = value;
+            m_globalGravity = m_globalGravity.magnitude > 10f ? (m_globalGravity.normalized * 10f) : m_globalGravity;
         }
     }
 

@@ -14,6 +14,7 @@ public class Player : MonoBehaviour
     [SerializeField]
     private int m_maxJumps;
     private int m_jumpsLeft;
+    private bool m_airborn;
 
     private Rigidbody2D m_rigidbody;
     private Rigidbody2D m_target;
@@ -32,7 +33,7 @@ public class Player : MonoBehaviour
 
         m_target = m_rigidbody;
         OnInput += InputMove;
-        OnInput += InputDirection;
+        //OnInput += InputDirection;
         OnInput += InputTime;
         OnInput += InputGlobalGravity;
         OnInput += InputExternalGravityControl;
@@ -43,7 +44,6 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        //GravityAdjust();
         UpdateSelfTeather();
     }
 
@@ -57,7 +57,7 @@ public class Player : MonoBehaviour
         bool buttonA = packet.bools[0];
         bool buttonB = packet.bools[1];
 
-        velocity.x += leftStick.x * speed;
+        velocity.x += leftStick.x * speed * (m_airborn ? 0.1f : 1f);
         velocity.y += buttonA && m_jumpsLeft > 0 ? m_jumpStrength :
             buttonB && m_jumpsLeft > 0 ? -m_jumpStrength *2f : -1;
         m_jumpsLeft -= buttonA || buttonB ? 1 : 0;
@@ -66,7 +66,8 @@ public class Player : MonoBehaviour
 
         velocity = transform.TransformDirection(velocity);
 
-        m_rigidbody.AddForce(velocity);
+        m_rigidbody.drag *= Utilities.timeScale;
+        m_rigidbody.AddForce(transform.TransformDirection(velocity));
         m_rigidbody.AddForce(Utilities.globalGravity);
     }
 
@@ -74,8 +75,16 @@ public class Player : MonoBehaviour
 
     private void InputDirection(Mouledoux.Callback.Packet packet)
     {
+        if (packet.floats[4] < 0.1f)
+        {
+            return;
+        }
+        
         Vector2 rightStick = new Vector2(packet.floats[2], packet.floats[3]);
-        transform.right = Vector3.Lerp(transform.right, rightStick, Time.deltaTime * speed);
+        if (rightStick.magnitude > 0.01f)
+        {
+            transform.right = Vector3.Lerp(transform.right, rightStick, Time.deltaTime * m_speed * Time.deltaTime);
+        }
     }
 
 
@@ -92,6 +101,10 @@ public class Player : MonoBehaviour
         if(packet.bools[9])
         {
             Utilities.globalGravity = Vector3.zero;
+            return;
+        }
+        else if(packet.floats[4] > 0.1f)
+        {
             return;
         }
 
@@ -140,15 +153,19 @@ public class Player : MonoBehaviour
         m_target.AddForce((m_rigidbody.position - m_target.position) * dist / 5f);
     }
 
-
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         m_jumpsLeft = (Physics2D.Raycast(transform.position, -transform.up)) ? m_maxJumps : m_jumpsLeft;
+        m_airborn = (m_jumpsLeft != m_maxJumps);
 
     }
     private void OnCollisionExit2D(Collision2D collision)
     {
-
+        m_airborn = (collision.contacts.Length < 1);
     }
 }
