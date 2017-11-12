@@ -34,6 +34,7 @@ public class InputController : MonoBehaviour
     bool buttonB = false;
     bool buttonX = false;
     bool buttonY = false;
+    bool rightStickClick = false;
 
     bool dPadUp = false;
     bool dPadDown = false;
@@ -63,8 +64,8 @@ public class InputController : MonoBehaviour
 
         buttonA = Input.GetKeyDown(KeyCode.JoystickButton0);
         buttonB = Input.GetKeyDown(KeyCode.JoystickButton1);
-        buttonX = Input.GetKeyDown(KeyCode.JoystickB);
-
+        buttonX = Input.GetKeyDown(KeyCode.JoystickButton2);
+        rightStickClick = Input.GetKeyDown(KeyCode.JoystickButton9);
 
         joysticks[0] = leftStick.x;
         joysticks[1] = leftStick.y;
@@ -77,6 +78,7 @@ public class InputController : MonoBehaviour
         buttons[0] = buttonA;
         buttons[1] = buttonB;
         buttons[2] = buttonX;
+        buttons[9] = rightStickClick;
 
 
         Mouledoux.Callback.Packet inputData =

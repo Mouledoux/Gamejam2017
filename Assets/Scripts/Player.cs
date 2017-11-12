@@ -18,6 +18,8 @@ public class Player : MonoBehaviour
     private Rigidbody2D m_rigidbody;
     private Rigidbody2D m_target;
 
+    private LineRenderer m_selfTeather;
+
     private Mouledoux.Components.Mediator.Subscriptions m_subscriptions =
         new Mouledoux.Components.Mediator.Subscriptions();
 
@@ -26,8 +28,11 @@ public class Player : MonoBehaviour
     private void Start()
     {
         m_rigidbody = GetComponent<Rigidbody2D>();
+        m_selfTeather = GetComponent<LineRenderer>();
+
         m_target = m_rigidbody;
         OnInput += InputMove;
+        OnInput += InputDirection;
         OnInput += InputTime;
         OnInput += InputGlobalGravity;
         OnInput += InputExternalGravityControl;
@@ -38,8 +43,11 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        GravityAdjust();
+        //GravityAdjust();
+        UpdateSelfTeather();
     }
+
+
 
     private void InputMove(Mouledoux.Callback.Packet packet)
     {
@@ -51,16 +59,25 @@ public class Player : MonoBehaviour
 
         velocity.x += leftStick.x * speed;
         velocity.y += buttonA && m_jumpsLeft > 0 ? m_jumpStrength :
-            buttonB && m_jumpsLeft > 0 ? -m_jumpStrength *2f : 0;
+            buttonB && m_jumpsLeft > 0 ? -m_jumpStrength *2f : -1;
         m_jumpsLeft -= buttonA || buttonB ? 1 : 0;
 
         velocity *= Utilities.timeScale;
 
-        velocity = m_target.transform.TransformDirection(velocity);
-        velocity += (Vector2)Utilities.globalGravity;
+        velocity = transform.TransformDirection(velocity);
 
-        m_target.AddForce(velocity);
+        m_rigidbody.AddForce(velocity);
+        m_rigidbody.AddForce(Utilities.globalGravity);
     }
+
+
+
+    private void InputDirection(Mouledoux.Callback.Packet packet)
+    {
+        Vector2 rightStick = new Vector2(packet.floats[2], packet.floats[3]);
+        transform.right = Vector3.Lerp(transform.right, rightStick, Time.deltaTime * speed);
+    }
+
 
 
     private void InputTime(Mouledoux.Callback.Packet packet)
@@ -68,8 +85,16 @@ public class Player : MonoBehaviour
         Utilities.timeScale = 1f - Mathf.Clamp(packet.floats[4], 0f, .9f);
     }
 
+
+
     private void InputGlobalGravity(Mouledoux.Callback.Packet packet)
     {
+        if(packet.bools[9])
+        {
+            Utilities.globalGravity = Vector3.zero;
+            return;
+        }
+
         Vector2 rightStick = new Vector2(packet.floats[2], packet.floats[3]);
         if (rightStick.magnitude > 0.01f)
         {
@@ -80,26 +105,41 @@ public class Player : MonoBehaviour
         }
     }
 
+
+
     private void InputExternalGravityControl(Mouledoux.Callback.Packet packet)
     {
-        print(packet.bools[3]);
+        if (!packet.bools[2] || packet.floats[4] < 0.1f) return;
+        
+        if(m_target != m_rigidbody)
+        {
+            m_target = m_rigidbody;
+        }
 
-        if (!packet.bools[3]) return;
-
-        Debug.DrawRay(transform.position, transform.forward, Color.blue, 10);
-
-        RaycastHit2D rayHit = Physics2D.Raycast(transform.position, transform.forward);
-
+        RaycastHit2D rayHit = Physics2D.Raycast(transform.position, transform.right);
         if (rayHit.transform.GetComponent<Rigidbody2D>() == null) return;
-
         m_target = rayHit.transform.GetComponent<Rigidbody2D>();
     }
 
+
+
     private void GravityAdjust()
     {
-        if(m_target == m_rigidbody)
-            transform.up = Vector3.Lerp(transform.up, -Utilities.globalGravity, Time.deltaTime);
+        transform.up = Vector3.Lerp(transform.up, -Utilities.globalGravity, Time.deltaTime);
     }
+
+
+
+    private void UpdateSelfTeather()
+    {
+        m_selfTeather.SetPositions(new Vector3[] { transform.position, m_target.position });
+
+        float dist = Vector3.Distance(transform.position, m_target.position);
+
+        m_rigidbody.AddForce((m_target.position - m_rigidbody.position) * dist / 5f);
+        m_target.AddForce((m_rigidbody.position - m_target.position) * dist / 5f);
+    }
+
 
 
     private void OnCollisionEnter2D(Collision2D collision)
