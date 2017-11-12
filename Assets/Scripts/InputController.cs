@@ -30,11 +30,33 @@ public class InputController : MonoBehaviour
 
     private void CheckInput()
     {
+        Vector2 leftStick, rightStick;
+        leftStick = rightStick = Vector2.zero;
+
+        Vector2 leftTrigger, rightTrigger;
+        leftTrigger = rightTrigger = Vector2.zero;
+
+        bool buttonA, buttonB, buttonX, buttonY;
+        buttonA = buttonB = buttonX = buttonY = false;
+
+        bool dPadUp, dPadDown, dPadLeft, dPadRight;
+        dPadUp = dPadDown = dPadLeft = dPadRight = false;
+
+        bool leftBumber, rightBumber;
+        leftBumber = rightBumber = false;
+
+
+
         bool[] buttons = new bool[16];
         float[] joysticks = new float[6];
 
-        Vector2 leftStick = GetJoystickInput("Left");
-        Vector2 rightStick = GetJoystickInput("Right");
+
+        leftStick = GetJoystickInput("Left");
+        rightStick = GetJoystickInput("Right");
+
+
+        buttonA = Input.GetKeyDown(KeyCode.Joystick1Button0);
+        buttons[0] = buttonA;
 
         joysticks[0] = leftStick.x;
         joysticks[1] = leftStick.y;

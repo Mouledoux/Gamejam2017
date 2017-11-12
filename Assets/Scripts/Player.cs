@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : RelativeMotionController2D
-{ 
+{
+    public float m_jumpStrength;
+
+    private bool m_isGrounded;
+
     private Mouledoux.Components.Mediator.Subscriptions m_subscriptions =
         new Mouledoux.Components.Mediator.Subscriptions();
 
@@ -33,11 +37,23 @@ public class Player : RelativeMotionController2D
         bool leftBumber, rightBumber;
         leftBumber = rightBumber = false;
 
+        buttonA = packet.bools[0];
+
         leftStick.x = packet.floats[0];
-        leftStick.y = packet.floats[1];
+        leftStick.y = buttonA && m_isGrounded ? m_jumpStrength : 0;
+        leftStick *= m_speed * Time.deltaTime;
+
+
         rightStick.x = packet.floats[2];
         rightStick.y = packet.floats[3];
 
-        SetLocalVelocity(leftStick);
+
+
+        IncreaseLocalVelocity(leftStick);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        m_isGrounded = collision.contacts[0].point.y < transform.position.y;
     }
 }

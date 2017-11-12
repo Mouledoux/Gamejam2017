@@ -48,25 +48,38 @@ public class RelativeMotionController2D : MonoBehaviour
     public float m_speed;
 
     [SerializeField] private float m_weight;
-    [SerializeField] private float m_drag;
+    [SerializeField, Range(0f, 1f)] private float m_drag;
 
     [SerializeField] private float m_gravityMod;
     [SerializeField] private bool m_lockedInPlace;
 
+    private Rigidbody2D m_rigidbody;
+
     protected void Start()
     {
+        m_rigidbody = GetComponent<Rigidbody2D>();
     }
 
     protected void Update()
     {
+        if (m_lockedInPlace) return;
+
+        CheckGravity();
         Move();
+
+        SetLocalVelocity(m_localVelocity - (m_localVelocity * m_drag));
     }
 
     protected int Move()
     {
-        float speed = Time.deltaTime * m_speed;
-        transform.Translate(m_localVelocity * speed);
+        m_rigidbody.velocity = m_localVelocity;
         return 0;
+    }
+
+    protected void CheckGravity()
+    {
+        Vector2 gravity = new Vector2(0, Time.deltaTime * -m_gravityMod);
+        IncreaseLocalVelocity(gravity);
     }
 
     protected void SetLocalVelocity(Vector2 newVel)
@@ -74,14 +87,8 @@ public class RelativeMotionController2D : MonoBehaviour
         m_localVelocity = newVel;
     }
 
-    protected void OnCollisionEnter(Collision collision)
+    protected void IncreaseLocalVelocity(Vector2 vel)
     {
-        Vector2 averageCollisionPoint = Vector2.zero;
-        foreach(ContactPoint point in collision.contacts)
-        {
-            averageCollisionPoint += (Vector2)point.point;
-        }
-
-        print(collision.collider.name);
+        SetLocalVelocity(m_localVelocity + vel);
     }
 }
