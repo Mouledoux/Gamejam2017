@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class Utilities
 {
-    private static float m_timeScale;
+    private static float m_timeScale = 1f;
     public static float timeScale
     {
         get
@@ -22,7 +22,7 @@ public static class Utilities
     {
         get
         {
-            return m_globalGravity;
+            return m_globalGravity * timeScale;
         }
         set
         {

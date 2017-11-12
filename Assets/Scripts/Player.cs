@@ -33,18 +33,23 @@ public class Player : MonoBehaviour
 
         m_target = m_rigidbody;
         OnInput += InputMove;
-        //OnInput += InputDirection;
+        OnInput += InputDirection;
         OnInput += InputTime;
-        OnInput += InputGlobalGravity;
+        //OnInput += InputGlobalGravity;
         OnInput += InputExternalGravityControl;
 
         m_subscriptions.Subscribe("input", OnInput);
-        Utilities.globalGravity = new Vector3(0, -9.8f, 0);
     }
 
     private void Update()
     {
+        //UpdateRigidPhysics();
         UpdateSelfTeather();
+    }
+
+    private void LateUpdate()
+    {
+        //ResetRigidhysics();
     }
 
 
@@ -57,41 +62,37 @@ public class Player : MonoBehaviour
         bool buttonA = packet.bools[0];
         bool buttonB = packet.bools[1];
 
-        velocity.x += leftStick.x * speed * (m_airborn ? 0.1f : 1f);
+        velocity.x += leftStick.x * speed * (m_airborn ? 0.25f : 1f);
         velocity.y += buttonA && m_jumpsLeft > 0 ? m_jumpStrength :
             buttonB && m_jumpsLeft > 0 ? -m_jumpStrength *2f : -1;
         m_jumpsLeft -= buttonA || buttonB ? 1 : 0;
 
+        velocity = transform.TransformDirection(velocity);
         velocity *= Utilities.timeScale;
 
-        velocity = transform.TransformDirection(velocity);
+        UpdateRigidPhysics();
 
-        m_rigidbody.drag *= Utilities.timeScale;
-        m_rigidbody.AddForce(transform.TransformDirection(velocity));
-        m_rigidbody.AddForce(Utilities.globalGravity);
+        //m_rigidbody.AddForce(velocity);
+        //m_rigidbody.AddForce(Utilities.globalGravity * Utilities.timeScale);
+
+        ResetRigidhysics();
     }
 
 
 
     private void InputDirection(Mouledoux.Callback.Packet packet)
     {
-        if (packet.floats[4] < 0.1f)
-        {
-            return;
-        }
-        
-        Vector2 rightStick = new Vector2(packet.floats[2], packet.floats[3]);
-        if (rightStick.magnitude > 0.01f)
-        {
-            transform.right = Vector3.Lerp(transform.right, rightStick, Time.deltaTime * m_speed * Time.deltaTime);
-        }
+        Vector2 direction = Camera.main.transform.up.normalized;
+        transform.up = Vector3.Lerp(transform.up, direction, Time.deltaTime * m_speed);
+
     }
 
 
 
     private void InputTime(Mouledoux.Callback.Packet packet)
     {
-        Utilities.timeScale = 1f - Mathf.Clamp(packet.floats[4], 0f, .9f);
+        Utilities.timeScale = (packet.bools[0] ? 0.1f : 1.0f);
+        
     }
 
 
@@ -124,9 +125,10 @@ public class Player : MonoBehaviour
     {
         if (!packet.bools[2] || packet.floats[4] < 0.1f) return;
         
-        if(m_target != m_rigidbody)
+        if(m_target != null)
         {
-            m_target = m_rigidbody;
+            m_target = null;
+            return;
         }
 
         RaycastHit2D rayHit = Physics2D.Raycast(transform.position, transform.right);
@@ -145,12 +147,38 @@ public class Player : MonoBehaviour
 
     private void UpdateSelfTeather()
     {
+        if(m_target == null)
+        {
+            m_selfTeather.positionCount = 0;
+            return;
+        }
+
         m_selfTeather.SetPositions(new Vector3[] { transform.position, m_target.position });
 
         float dist = Vector3.Distance(transform.position, m_target.position);
 
-        m_rigidbody.AddForce((m_target.position - m_rigidbody.position) * dist / 5f);
-        m_target.AddForce((m_rigidbody.position - m_target.position) * dist / 5f);
+        m_rigidbody.AddForce((m_target.position - m_rigidbody.position) * Utilities.timeScale * dist / 5f);
+        m_target.AddForce((m_rigidbody.position - m_target.position) * Utilities.timeScale * dist / 5f);
+    }
+
+
+
+    private void UpdateRigidPhysics()
+    {
+        m_rigidbody.drag *= Utilities.timeScale;
+        m_rigidbody.angularDrag *= Utilities.timeScale;
+        m_rigidbody.gravityScale *= Utilities.timeScale;
+    }
+
+    private void ResetRigidhysics()
+    {
+        m_rigidbody.drag =
+            m_rigidbody.drag != 0 ? m_rigidbody.drag / Utilities.timeScale : m_rigidbody.drag;
+        m_rigidbody.angularDrag =
+            m_rigidbody.angularDrag != 0 ? m_rigidbody.angularDrag / Utilities.timeScale : m_rigidbody.angularDrag;
+        m_rigidbody.drag =
+            m_rigidbody.gravityScale != 0 ? m_rigidbody.gravityScale / Utilities.timeScale : m_rigidbody.gravityScale;
+
     }
 
     private void OnCollisionStay2D(Collision2D collision)

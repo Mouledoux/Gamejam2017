@@ -41,8 +41,8 @@ public class InputController : MonoBehaviour
     bool dPadLeft = false;
     bool dPadRight = false;
 
-    bool leftBumber = false;
-    bool rightBumber = false;
+    bool leftBumper = false;
+    bool rightBumper = false;
 
     #endregion
 
@@ -65,6 +65,10 @@ public class InputController : MonoBehaviour
         buttonA = Input.GetKeyDown(KeyCode.JoystickButton0);
         buttonB = Input.GetKeyDown(KeyCode.JoystickButton1);
         buttonX = Input.GetKeyDown(KeyCode.JoystickButton2);
+        buttonY = Input.GetKeyDown(KeyCode.JoystickButton3);
+        leftBumper = Input.GetKeyDown(KeyCode.JoystickButton4);
+        rightBumper = Input.GetKeyDown(KeyCode.JoystickButton5);
+
         rightStickClick = Input.GetKeyDown(KeyCode.JoystickButton9);
 
         joysticks[0] = leftStick.x;
@@ -78,6 +82,9 @@ public class InputController : MonoBehaviour
         buttons[0] = buttonA;
         buttons[1] = buttonB;
         buttons[2] = buttonX;
+        buttons[3] = buttonY;
+        buttons[4] = leftBumper;
+        buttons[5] = rightBumper;
         buttons[9] = rightStickClick;
 
 
