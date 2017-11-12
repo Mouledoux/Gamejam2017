@@ -25,7 +25,7 @@ public class InputController : MonoBehaviour
 
     private void Update()
     {
-        transform.position = GetJoystickInput("Left");
+    
     }
 
     private Vector2 GetJoystickInput(string joystick)
