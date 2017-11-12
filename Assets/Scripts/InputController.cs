@@ -48,7 +48,7 @@ public class InputController : MonoBehaviour
     bool[] buttons = new bool[16];
     float[] joysticks = new float[6];
 
-    private void FixedUpdate()
+    private void Update()
     {
         GetControllerInput();
     }
@@ -58,13 +58,13 @@ public class InputController : MonoBehaviour
         leftStick = GetJoystickInput("Left");
         rightStick = GetJoystickInput("Right");
 
-        leftTrigger = Mathf.Clamp(GetTriggerInput(), 0, 1);
-        rightTrigger = Mathf.Abs(Mathf.Clamp(GetTriggerInput(), -1, 0));
+        leftTrigger = GetTriggerInput("Left");
+        rightTrigger = GetTriggerInput("Right");
 
+        buttonA = Input.GetKeyDown(KeyCode.JoystickButton0);
+        buttonB = Input.GetKeyDown(KeyCode.JoystickButton1);
+        buttonX = Input.GetKeyDown(KeyCode.JoystickB);
 
-        buttonA = Input.GetKeyDown(KeyCode.Joystick1Button0);
-
-        
 
         joysticks[0] = leftStick.x;
         joysticks[1] = leftStick.y;
@@ -75,6 +75,8 @@ public class InputController : MonoBehaviour
 
 
         buttons[0] = buttonA;
+        buttons[1] = buttonB;
+        buttons[2] = buttonX;
 
 
         Mouledoux.Callback.Packet inputData =
@@ -91,8 +93,8 @@ public class InputController : MonoBehaviour
         return stickPos;
     }
 
-    private float GetTriggerInput()
+    private float GetTriggerInput(string trigger)
     {
-        return Input.GetAxis("Triggers");
+        return Input.GetAxisRaw("Trigger" + trigger);
     }
 }

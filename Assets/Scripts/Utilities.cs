@@ -18,5 +18,16 @@ public static class Utilities
     }
 
     private static Vector3 m_globalGravity;
+    public static Vector3 globalGravity
+    {
+        get
+        {
+            return m_globalGravity * timeScale;
+        }
+        set
+        {
+            m_globalGravity = value;
+        }
+    }
 
 }
