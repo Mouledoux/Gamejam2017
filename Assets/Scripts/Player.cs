@@ -2,58 +2,70 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : RelativeMotionController2D
+public class Player : MonoBehaviour
 {
+    [SerializeField]
+    private float m_speed;
+    public float speed
+    {
+        get { return m_speed * Time.deltaTime * Utilities.timeScale; }
+    }
     public float m_jumpStrength;
+    [SerializeField]
+    private int m_maxJumps;
+    private int m_jumpsLeft;
 
-    private bool m_isGrounded;
+    private Rigidbody2D m_rigidbody;
 
     private Mouledoux.Components.Mediator.Subscriptions m_subscriptions =
         new Mouledoux.Components.Mediator.Subscriptions();
 
-    Mouledoux.Callback.Callback OnInputMove;
+    Mouledoux.Callback.Callback OnInputMove, OnInputTime;
 
-    private new void Start()
+    private void Start()
     {
-        base.Start();
+        m_rigidbody = GetComponent<Rigidbody2D>();
         OnInputMove += InputMove;
+        OnInputTime += InputTime;
         m_subscriptions.Subscribe("input", OnInputMove);
+        m_subscriptions.Subscribe("input", OnInputTime);
     }
+
 
     private void InputMove(Mouledoux.Callback.Packet packet)
     {
-        Vector2 leftStick, rightStick;
-        leftStick = rightStick = Vector2.zero;
+        Vector2 velocity = Vector2.zero;
 
-        Vector2 leftTrigger, rightTrigger;
-        leftTrigger = rightTrigger = Vector2.zero;
+        Vector2 leftStick = new Vector2(packet.floats[0], packet.floats[1]);
+        bool buttonA = packet.bools[0];
+        
+        velocity.x = leftStick.x * speed;
+        velocity.y = buttonA && m_jumpsLeft > 0 ? m_jumpStrength : -9.8f;
+        m_jumpsLeft -= buttonA ? 1 : 0;
 
-        bool buttonA, buttonB, buttonX, buttonY;
-        buttonA = buttonB = buttonX = buttonY = false;
+        velocity *= Utilities.timeScale;
 
-        bool dPadUp, dPadDown, dPadLeft, dPadRight;
-        dPadUp = dPadDown = dPadLeft = dPadRight = false
-            ;
-        bool leftBumber, rightBumber;
-        leftBumber = rightBumber = false;
-
-        buttonA = packet.bools[0];
-
-        leftStick.x = packet.floats[0];
-        leftStick.y = buttonA && m_isGrounded ? m_jumpStrength : 0;
-        leftStick *= m_speed * Time.deltaTime;
-
-
-        rightStick.x = packet.floats[2];
-        rightStick.y = packet.floats[3];
-
-
-
-        IncreaseLocalVelocity(leftStick);
+        m_rigidbody.AddForce(velocity);
     }
+
+
+    private void InputTime(Mouledoux.Callback.Packet packet)
+    {
+        float leftTrigger, rightTrigger;
+        leftTrigger = rightTrigger = 0f;
+
+        leftTrigger = packet.floats[4];
+        rightTrigger = packet.floats[5];
+
+        Utilities.timeScale = 1f - Mathf.Clamp(leftTrigger, 0f, .9f);
+    }
+
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        m_isGrounded = collision.contacts[0].point.y < transform.position.y;
+        m_jumpsLeft = (collision.contacts[0].point.y < transform.position.y) ? m_maxJumps : m_jumpsLeft;
+    }
+    private void OnCollisionExit2D(Collision2D collision)
+    {
     }
 }
